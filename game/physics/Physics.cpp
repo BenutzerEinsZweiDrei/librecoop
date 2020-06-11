@@ -75,6 +75,12 @@ idPhysics::SnapTimeToPhysicsFrame
 */
 int idPhysics::SnapTimeToPhysicsFrame( int t ) {
 	int s;
+
+#ifdef _UNLOCKEDFPS
+	s = t + gameLocal.msec - 1;
+	return ( s - s % gameLocal.msec );
+#else
 	s = t + USERCMD_MSEC - 1;
 	return ( s - s % USERCMD_MSEC );
+#endif
 }

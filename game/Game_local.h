@@ -339,7 +339,13 @@ public:
 	int						previousTime;			// time in msec of last frame
 	int						previousClientsideTime;	// time in msec of last frame (for clientsidecoop)
 	int						time;					// in msec
+
+#ifdef _UNLOCKEDFPS
+	int						msec;					// time since last update in milliseconds
+	int						gameFps;				//added by Stradex for com_gameHz
+#else
 	static const int		msec = USERCMD_MSEC;	// time since last update in milliseconds
+#endif
 
 	int						vacuumAreaNum;			// -1 if level doesn't have any outside areas
 
@@ -615,6 +621,10 @@ private:
 	void					RunDebugInfo( void );
 
 	void					InitScriptForMap( void );
+
+#ifdef _UNLOCKEDFPS
+	void					SetScriptFPS(const float tCom_gameHz);
+#endif
 
 	void					InitConsoleCommands( void );
 	void					ShutdownConsoleCommands( void );

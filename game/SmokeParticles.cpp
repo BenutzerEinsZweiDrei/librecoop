@@ -221,7 +221,11 @@ bool idSmokeParticles::EmitSmoke( const idDeclParticle *smoke, const int systemS
 			if ( nowCount >= stage->totalParticles ) {
 				nowCount = stage->totalParticles-1;
 			}
+#ifdef _UNLOCKEDFPS
+			prevCount = floor( ((float)( deltaMsec - gameLocal.msec ) / finalParticleTime) * stage->totalParticles );
+#else
 			prevCount = floor( ((float)( deltaMsec - USERCMD_MSEC ) / finalParticleTime) * stage->totalParticles );
+#endif
 			if ( prevCount < -1 ) {
 				prevCount = -1;
 			}

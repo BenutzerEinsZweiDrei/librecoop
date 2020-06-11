@@ -2980,7 +2980,11 @@ void idGameLocal::sendServerOverflowEvents( void )
 	}
 	if (serverEventsCount > 0) {
 		common->Warning("[COOP] Server Events overflow!, using serverOverflowEvents queue list to avoid the crash for clients\n");
+#ifdef _UNLOCKEDFPS
+		overflowEventCountdown=idMath::Rint((float)SERVER_EVENT_OVERFLOW_WAIT*(float)gameFps/60.0);
+#else
 		overflowEventCountdown=SERVER_EVENT_OVERFLOW_WAIT;
+#endif
 	}
 	if (overflowEventCountdown > 0) {
 		serverEventsCount=MAX_SERVER_EVENTS_PER_FRAME; //FIXME: Ugly way for doing this.  Not pretty

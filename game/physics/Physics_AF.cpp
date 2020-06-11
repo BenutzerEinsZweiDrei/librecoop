@@ -6620,7 +6620,13 @@ idPhysics_AF::idPhysics_AF( void ) {
 
 	memset( &current, 0, sizeof( current ) );
 	current.atRest = -1;
+
+#ifdef _UNLOCKEDFPS
+	current.lastTimeStep = gameLocal.msec;
+#else
 	current.lastTimeStep = USERCMD_MSEC;
+#endif
+
 	saved = current;
 
 	linearFriction = 0.005f;

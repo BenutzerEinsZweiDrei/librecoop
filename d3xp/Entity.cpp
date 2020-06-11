@@ -5232,6 +5232,7 @@ void idEntity::Event_SetGui( int guiNum, const char *guiName) {
 	}
 
 	if( gui ) {
+		
 		*gui = uiManager->FindGui( guiName, true, false );
 		UpdateGuiParms( *gui, &spawnArgs );
 		UpdateChangeableSpawnArgs( NULL );
