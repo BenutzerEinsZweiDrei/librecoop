@@ -3278,7 +3278,11 @@ void idHomingProjectile::Launch( const idVec3 &start, const idVec3 &dir, const i
 	angles = vel.ToAngles();
 	speed = vel.Length();
 	rndScale = spawnArgs.GetAngles( "random", "15 15 0" );
+#ifdef _UNLOCKEDFPS
+	turn_max = spawnArgs.GetFloat( "turn_max", "180" ) / ( float )gameLocal.gameFps;
+#else
 	turn_max = spawnArgs.GetFloat( "turn_max", "180" ) / com_engineHz_latched;
+#endif
 	clamp_dist = spawnArgs.GetFloat( "clamp_dist", "256" );
 	burstMode = spawnArgs.GetBool( "burstMode" );
 	unGuided = false;
