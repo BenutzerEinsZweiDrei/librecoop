@@ -2875,8 +2875,11 @@ void idMover_Binary::Use_BinaryMover( idEntity *activator ) {
 	if ( moverState == MOVER_POS1 ) {
 		// FIXME: start moving USERCMD_MSEC later, because if this was player
 		// triggered, gameLocal.time hasn't been advanced yet
+#ifdef _UNLOCKEDFPS
+		MatchActivateTeam( MOVER_1TO2, gameLocal.slow.time + gameLocal.gameMsec );
+#else
 		MatchActivateTeam( MOVER_1TO2, gameLocal.slow.time + USERCMD_MSEC );
-
+#endif
 		SetGuiStates( guiBinaryMoverStates[MOVER_1TO2] );
 		// open areaportal
 		ProcessEvent( &EV_Mover_OpenPortal );

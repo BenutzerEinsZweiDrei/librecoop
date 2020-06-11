@@ -1874,7 +1874,11 @@ idThread::Event_GetTicsPerSecond
 ================
 */
 void idThread::Event_GetTicsPerSecond( void ) {
+#ifdef _UNLOCKEDFPS
+	idThread::ReturnFloat( gameLocal.gameFps );
+#else
 	idThread::ReturnFloat( USERCMD_HZ );
+#endif
 }
 
 /*

@@ -1860,6 +1860,9 @@ void idPlayer::Init( void ) {
 	stamina = pm_stamina.GetFloat();
 
 	// air always initialized to maximum too
+#ifdef _UNLOCKEDFPS
+	pm_airTics.SetFloat((static_cast<float>(gameLocal.gameFps) / 60.0) * pm_airTics.GetFloat()); //update for com_gameHz
+#endif
 	airTics = pm_airTics.GetFloat();
 	airless = false;
 

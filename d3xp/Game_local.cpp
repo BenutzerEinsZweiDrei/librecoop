@@ -338,6 +338,12 @@ void idGameLocal::Init( void ) {
 	const idDict *dict;
 	idAAS *aas;
 
+#ifdef _UNLOCKEDFPS
+	msec = 16; //60fps
+	gameMsec = msec;
+	gameFps = 60; //60fps
+#endif
+
 #ifndef GAME_DLL
 
 	TestGameAPI();
@@ -353,6 +359,13 @@ void idGameLocal::Init( void ) {
 	// initialize processor specific SIMD
 	idSIMD::InitProcessor( "game", com_forceGenericSIMD.GetBool() );
 
+#endif
+
+#ifdef _UNLOCKEDFPS
+	//Update MSEC and gameFps
+	gameFps = cvarSystem->GetCVarInteger("com_gameHz");
+	msec = idMath::FtoiFast(1000.0f / static_cast<float>(cvarSystem->GetCVarInteger("com_gameHz")));
+	gameMsec = msec;
 #endif
 
 	Printf( "----- Initializing Game -----\n" );
@@ -1426,6 +1439,10 @@ void idGameLocal::MapPopulate( void ) {
 	if (!gameLocal.mpGame.IsGametypeCoopBased() || !gameLocal.isRestartingMap) {
 		idEvent::ServiceEvents();
 	}
+
+#ifdef _UNLOCKEDFPS
+	SetScriptFPS(static_cast<const float>(this->gameFps));
+#endif
 }
 
 /*
@@ -1504,6 +1521,10 @@ bool idGameLocal::InitFromSaveGame( const char *mapName, idRenderWorld *renderWo
 
 	gameRenderWorld = renderWorld;
 	gameSoundWorld = soundWorld;
+
+#ifdef _UNLOCKEDFPS
+	SetScriptFPS(static_cast<const float>(this->gameFps));
+#endif
 
 	idRestoreGame savegame( saveGameFile );
 
@@ -1671,7 +1692,11 @@ bool idGameLocal::InitFromSaveGame( const char *mapName, idRenderWorld *renderWo
 		}
 	}
 	if ( gameSoundWorld ) {
+#ifdef _UNLOCKEDFPS
+		gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)gameMsec );
+#else
 		gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)USERCMD_MSEC );
+#endif
 	}
 #endif
 
@@ -5388,7 +5413,11 @@ void idGameLocal::ComputeSlowMsec() {
 
 		// stop the state
 		slowmoState = SLOWMO_STATE_OFF;
+#ifdef _UNLOCKEDFPS
+		slowmoMsec = (float)gameMsec;
+#else
 		slowmoMsec = USERCMD_MSEC;
+#endif
 	}
 
 	// check the player state
@@ -5409,7 +5438,11 @@ void idGameLocal::ComputeSlowMsec() {
 		slowmoMsec = msec;
 		if ( gameSoundWorld ) {
 			gameSoundWorld->SetSlowmo( true );
+#ifdef _UNLOCKEDFPS
+			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)gameMsec );
+#else
 			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)USERCMD_MSEC );
+#endif
 		}
 	}
 	else if ( !powerupOn && slowmoState == SLOWMO_STATE_ON ) {
@@ -5423,10 +5456,18 @@ void idGameLocal::ComputeSlowMsec() {
 
 	// do any necessary ramping
 	if ( slowmoState == SLOWMO_STATE_RAMPUP ) {
-		delta = 4 - slowmoMsec;
 
+#ifdef _UNLOCKEDFPS
+		delta = idMath::Rint(4.0 * 60.0 / (float)gameFps) - slowmoMsec;
+#else
+		delta = 4 - slowmoMsec;
+#endif
 		if ( fabs( delta ) < g_slowmoStepRate.GetFloat() ) {
+#ifdef _UNLOCKEDFPS
+			slowmoMsec = idMath::Rint(4.0 * 60.0 / (float)gameFps);
+#else
 			slowmoMsec = 4;
+#endif
 			slowmoState = SLOWMO_STATE_ON;
 		}
 		else {
@@ -5438,10 +5479,17 @@ void idGameLocal::ComputeSlowMsec() {
 		}
 	}
 	else if ( slowmoState == SLOWMO_STATE_RAMPDOWN ) {
+#ifdef _UNLOCKEDFPS
+		delta = idMath::Rint(16.0 * 60.0 / (float)gameFps) - slowmoMsec;
+#else
 		delta = 16 - slowmoMsec;
-
+#endif
 		if ( fabs( delta ) < g_slowmoStepRate.GetFloat() ) {
+#ifdef _UNLOCKEDFPS
+			slowmoMsec = idMath::Rint(16.0*60.0/(float)gameFps);
+#else
 			slowmoMsec = 16;
+#endif
 			slowmoState = SLOWMO_STATE_OFF;
 			if ( gameSoundWorld ) {
 				gameSoundWorld->SetSlowmo( false );
@@ -5452,7 +5500,11 @@ void idGameLocal::ComputeSlowMsec() {
 		}
 
 		if ( gameSoundWorld ) {
+#ifdef _UNLOCKEDFPS
+			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)gameMsec );
+#else
 			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)USERCMD_MSEC );
+#endif
 		}
 	}
 }
@@ -5463,19 +5515,34 @@ idGameLocal::ResetSlowTimeVars
 ============
 */
 void idGameLocal::ResetSlowTimeVars() {
+
+#ifdef _UNLOCKEDFPS
+	msec				= gameMsec;
+	slowmoMsec			= gameMsec;
+#else
 	msec				= USERCMD_MSEC;
 	slowmoMsec			= USERCMD_MSEC;
+#endif
+
 	slowmoState			= SLOWMO_STATE_OFF;
 
 	fast.framenum		= 0;
 	fast.previousTime	= 0;
 	fast.time			= 0;
+#ifdef _UNLOCKEDFPS
+	fast.msec			= gameMsec;
+#else
 	fast.msec			= USERCMD_MSEC;
+#endif
 
 	slow.framenum		= 0;
 	slow.previousTime	= 0;
 	slow.time			= 0;
+#ifdef _UNLOCKEDFPS
+	slow.msec			= gameMsec;
+#else
 	slow.msec			= USERCMD_MSEC;
+#endif
 }
 
 /*
@@ -5678,3 +5745,38 @@ void idGameLocal::SetCameraCoop( idCamera *cam ) {
 		}
 	}
 } 
+
+#ifdef _UNLOCKEDFPS
+/*
+===================
+idGameLocal::SetScriptFPS
+===================
+*/
+void idGameLocal::SetScriptFPS(const float tCom_gameHz)
+{
+	idVarDef* fpsDef = program.GetDef(&type_float, "GAME_FPS", &def_namespace);
+	if (fpsDef != NULL) {
+		eval_t fpsValue;
+		fpsValue._float = tCom_gameHz;
+		fpsDef->SetValue(fpsValue, false);
+
+		common->Printf("GAME_FPS: %f\n", tCom_gameHz);
+	}
+	else {
+		common->Printf("Unable to find GAME_FPS def\n");
+	}
+
+	float frameRate = 1.0 / tCom_gameHz;
+	idVarDef* frameRateDef = program.GetDef(&type_float, "GAME_FRAMETIME", &def_namespace);
+	if (frameRateDef != NULL) {
+		eval_t frameRateValue;
+		frameRateValue._float = frameRate;
+		frameRateDef->SetValue(frameRateValue, false);
+
+		common->Printf("GAME_FRAMETIME to: %f\n", frameRate);
+	}
+	else {
+		common->Printf("Unable to find GAME_FRAMETIME def\n");
+	}
+}
+#endif

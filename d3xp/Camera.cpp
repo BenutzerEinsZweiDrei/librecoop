@@ -623,7 +623,11 @@ void idCameraAnim::Think( void ) {
 
 		int realUserTime = gameLocal.time;
 
+#ifdef _UNLOCKEDFPS
+		if ( frameRate == gameLocal.gameFps ) {
+#else
 		if ( frameRate == USERCMD_HZ ) {
+#endif
 			frameTime	= realUserTime - starttime;
 			frame		= frameTime / gameLocal.msec;
 		} else {
@@ -679,7 +683,11 @@ void idCameraAnim::GetViewParms( renderView_t *view ) {
 
 	int realUserTime = gameLocal.time;
 
+#ifdef _UNLOCKEDFPS
+	if ( frameRate == gameLocal.gameFps ) {
+#else
 	if ( frameRate == USERCMD_HZ ) {
+#endif
 		frameTime	= realUserTime - starttime;
 		frame		= frameTime / gameLocal.msec;
 		lerp		= 0.0f;

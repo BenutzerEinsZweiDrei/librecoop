@@ -368,6 +368,10 @@ public:
 	int						previousTime;			// time in msec of last frame
 	int						time;					// in msec
 	int						msec;					// time since last update in milliseconds
+#ifdef _UNLOCKEDFPS
+	int						gameFps;				//added by Stradex for com_gameHz
+	int						gameMsec;				//added by Stradex for com_gameHz (ROE)
+#endif
 
 	int						vacuumAreaNum;			// -1 if level doesn't have any outside areas
 
@@ -684,6 +688,9 @@ private:
 	void					RunDebugInfo( void );
 
 	void					InitScriptForMap( void );
+#ifdef _UNLOCKEDFPS
+	void					SetScriptFPS(const float tCom_gameHz);
+#endif
 
 	void					InitConsoleCommands( void );
 	void					ShutdownConsoleCommands( void );

@@ -29,6 +29,10 @@ If you have questions concerning this license or the applicable additional terms
 #include "sys/platform.h"
 #include "framework/UsercmdGen.h"
 
+#ifdef _UNLOCKEDFPS
+#include "Game_local.h"
+#endif
+
 #include "physics/Physics.h"
 
 #include "physics/Force_Drag.h"
@@ -139,9 +143,13 @@ void idForce_Drag::Evaluate( int time ) {
 	l2 = dir2.Normalize();
 
 	rotation.Set( centerOfMass, dir2.Cross( dir1 ), RAD2DEG( idMath::ACos( dir1 * dir2 ) ) );
+#ifdef _UNLOCKEDFPS
+	physics->SetAngularVelocity( rotation.ToAngularVelocity() / MS2SEC( gameLocal.gameMsec ), id );
+	velocity = physics->GetLinearVelocity( id ) * damping + dir1 * ( ( l1 - l2 ) * ( 1.0f - damping ) / MS2SEC( gameLocal.gameMsec ) );
+#else
 	physics->SetAngularVelocity( rotation.ToAngularVelocity() / MS2SEC( USERCMD_MSEC ), id );
-
 	velocity = physics->GetLinearVelocity( id ) * damping + dir1 * ( ( l1 - l2 ) * ( 1.0f - damping ) / MS2SEC( USERCMD_MSEC ) );
+#endif
 	physics->SetLinearVelocity( velocity, id );
 }
 

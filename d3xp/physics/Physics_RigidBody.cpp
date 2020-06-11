@@ -447,8 +447,11 @@ idPhysics_RigidBody::idPhysics_RigidBody( void ) {
 	memset( &current, 0, sizeof( current ) );
 
 	current.atRest = -1;
+#ifdef _UNLOCKEDFPS
+	current.lastTimeStep = gameLocal.gameMsec;
+#else
 	current.lastTimeStep = USERCMD_MSEC;
-
+#endif
 	current.i.position.Zero();
 	current.i.orientation.Identity();
 
