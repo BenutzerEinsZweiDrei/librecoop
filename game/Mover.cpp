@@ -2847,7 +2847,7 @@ void idMover_Binary::Use_BinaryMover( idEntity *activator ) {
 		// triggered, gameLocal.time hasn't been advanced yet
 
 #ifdef _UNLOCKEDFPS
-		MatchActivateTeam( MOVER_1TO2, gameLocal.time + gameLocal.msec );
+		MatchActivateTeam( MOVER_1TO2, gameLocal.time +  (int)idMath::Rint(gameLocal.msec) );
 #else
 		MatchActivateTeam( MOVER_1TO2, gameLocal.time + USERCMD_MSEC );
 #endif

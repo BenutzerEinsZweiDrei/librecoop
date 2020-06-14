@@ -341,8 +341,9 @@ public:
 	int						time;					// in msec
 
 #ifdef _UNLOCKEDFPS
-	int						msec;					// time since last update in milliseconds
+	float					msec;					// time since last update in milliseconds
 	int						gameFps;				//added by Stradex for com_gameHz
+	int						clientSideframenum;		//for unlockedFPS
 #else
 	static const int		msec = USERCMD_MSEC;	// time since last update in milliseconds
 #endif
@@ -513,7 +514,11 @@ public:
 	// added the following to assist licensees with merge issues
 	int						GetFrameNum() const { return framenum; };
 	int						GetTime() const { return time; };
+#ifdef _UNLOCKEDFPS
+	int						GetMSec() const { return (int)idMath::Rint(msec); };
+#else
 	int						GetMSec() const { return msec; };
+#endif
 
 	int						GetNextClientNum( int current ) const;
 	idPlayer *				GetClientByNum( int current ) const;

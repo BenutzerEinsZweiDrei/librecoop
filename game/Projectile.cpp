@@ -1022,11 +1022,19 @@ void idProjectile::Explode( const trace_t &collision, idEntity *ignore ) {
 		light_fadetime = spawnArgs.GetFloat( "explode_light_fadetime", "0.5" );
 
 		if ( gameLocal.isClient  && this->clientsideNode.InList()) {
-			lightStartTime = gameLocal.realClientTime;
-			lightEndTime = gameLocal.realClientTime + SEC2MS( light_fadetime );
+			lightStartTime = gameLocal.clientsideTime;
+#ifdef _UNLOCKEDFPS
+			lightEndTime = MSEC_ALIGN_TO_FRAME(gameLocal.clientsideTime + SEC2MS( light_fadetime ));
+#else
+			lightEndTime = gameLocal.clientsideTime + SEC2MS( light_fadetime );
+#endif
 		} else {
 			lightStartTime = gameLocal.time;
+#ifdef _UNLOCKEDFPS
+			lightEndTime = MSEC_ALIGN_TO_FRAME(gameLocal.time + SEC2MS( light_fadetime ));
+#else
 			lightEndTime = gameLocal.time + SEC2MS( light_fadetime );
+#endif
 		}
 
 		BecomeActive( TH_THINK );

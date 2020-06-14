@@ -218,6 +218,9 @@ void idGameLocal::Clear( void ) {
 	cinematicStopTime = 0;
 	cinematicMaxSkipTime = 0;
 	framenum = 0;
+#ifdef _UNLOCKEDFPS
+	clientSideframenum = 0;
+#endif
 	previousTime = 0;
 	previousClientsideTime = 0;
 	time = 0;
@@ -296,7 +299,7 @@ void idGameLocal::Init( void ) {
 	idAAS *aas;
 
 #ifdef _UNLOCKEDFPS
-	msec = 16; //60fps
+	msec = 16.0; //60fps
 	gameFps = 60; //60fps
 #endif
 
@@ -320,7 +323,7 @@ void idGameLocal::Init( void ) {
 #ifdef _UNLOCKEDFPS
 	//Update MSEC and gameFps
 	gameFps = cvarSystem->GetCVarInteger("com_gameHz");
-	msec = idMath::FtoiFast(1000.0f / static_cast<float>(cvarSystem->GetCVarInteger("com_gameHz")));
+	msec = 1000.0f/ cvarSystem->GetCVarFloat("com_gameHz");
 #endif
 
 	Printf( "----- Initializing Game -----\n" );
@@ -2512,7 +2515,11 @@ gameReturn_t idGameLocal::RunFrame( const usercmd_t *clientCmds ) {
 		framenum++;
 		previousTime = time;
 		previousClientsideTime = time;
+#ifdef _UNLOCKEDFPS
+		time = FRAME_TO_MSEC(framenum);
+#else
 		time += msec;
+#endif
 		realClientTime = time;
 		clientsideTime = time;
 #ifdef GAME_DLL
@@ -4064,7 +4071,11 @@ idGameLocal::AlertAI
 void idGameLocal::AlertAI( idEntity *ent ) {
 	if ( ent && ent->IsType( idActor::Type ) ) {
 		// alert them for the next frame
+#ifdef _UNLOCKEDFPS
+		lastAIAlertTime = time + (int)idMath::Rint(msec);
+#else
 		lastAIAlertTime = time + msec;
+#endif
 		lastAIAlertEntity = static_cast<idActor *>( ent );
 	}
 }
@@ -4512,7 +4523,11 @@ void idGameLocal::SetCamera( idCamera *cam ) {
 
 	} else {
 		inCinematic = false;
+#ifdef _UNLOCKEDFPS
+		cinematicStopTime = time + (int)idMath::Rint(msec);
+#else
 		cinematicStopTime = time + msec;
+#endif
 
 		// restore r_znear
 		cvarSystem->SetCVarFloat( "r_znear", 3.0f );

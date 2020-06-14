@@ -74,10 +74,21 @@ extern idCVar		com_showSoundDecoders;
 extern idCVar		com_makingBuild;
 extern idCVar		com_updateLoadSize;
 
+#ifdef _UNLOCKEDFPS
+
+extern idCVar		com_gameHz;
+extern float		com_gameMSRate;
+extern int			com_realGameHz;
+
+#endif
+
 extern int			time_gameFrame;			// game logic time
 extern int			time_gameDraw;			// game present time
 extern int			time_frontend;			// renderer frontend time
 extern int			time_backend;			// renderer backend time
+
+
+
 
 extern int			com_frameTime;			// time for the current frame in milliseconds
 extern volatile int	com_ticNumber;			// 60 hz tics, incremented by async function
@@ -272,8 +283,37 @@ public:
 	// *out_fnptr will be the function (you'll have to cast it probably)
 	// *out_userArg will be an argument you have to pass to the function, if appropriate (else NULL)
 	virtual bool				GetAdditionalFunction(FunctionType ft, FunctionPointer* out_fnptr, void** out_userArg) = 0;
+
+#ifdef _UNLOCKEDFPS
+	virtual float				Get_com_gameMSRate(void) = 0;
+#endif
 };
 
 extern idCommon *		common;
+
+#ifdef _UNLOCKEDFPS
+
+// Returns the msec the frame starts on
+ID_INLINE int FRAME_TO_MSEC(int frame)
+{
+	return (int)idMath::Rint(static_cast<float>(frame) * common->Get_com_gameMSRate());
+}
+// Rounds DOWN to the nearest frame
+ID_INLINE int MSEC_TO_FRAME_FLOOR(int msec)
+{
+	return (int)idMath::Floor(static_cast<float>(msec) / common->Get_com_gameMSRate());
+}
+// Rounds UP to the nearest frame
+ID_INLINE int MSEC_TO_FRAME_CEIL(int msec)
+{
+	return (int)idMath::Ceil(static_cast<float>(msec) / common->Get_com_gameMSRate());
+}
+// Aligns msec so it starts on a frame bondary
+ID_INLINE int MSEC_ALIGN_TO_FRAME(int msec)
+{
+	return FRAME_TO_MSEC(MSEC_TO_FRAME_CEIL(msec));
+}
+
+#endif
 
 #endif /* !__COMMON_H__ */
