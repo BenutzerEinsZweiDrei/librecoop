@@ -257,6 +257,10 @@ void idGameLocal::Clear( void ) {
 	framenum = 0;
 	previousTime = 0;
 	time = 0;
+#ifdef _UNLOCKEDFPS
+	clientSidePreciseTime = 0.0f;
+	preciseTime = 0.0f;
+#endif
 	vacuumAreaNum = 0;
 	mapFileName.Clear();
 	mapFile = NULL;
@@ -339,7 +343,7 @@ void idGameLocal::Init( void ) {
 	idAAS *aas;
 
 #ifdef _UNLOCKEDFPS
-	msec = 16; //60fps
+	msec = 16.0; //60fps
 	gameMsec = msec;
 	gameFps = 60; //60fps
 #endif
@@ -364,7 +368,7 @@ void idGameLocal::Init( void ) {
 #ifdef _UNLOCKEDFPS
 	//Update MSEC and gameFps
 	gameFps = cvarSystem->GetCVarInteger("com_gameHz");
-	msec = idMath::FtoiFast(1000.0f / static_cast<float>(cvarSystem->GetCVarInteger("com_gameHz")));
+	msec = 1000.0f/ cvarSystem->GetCVarFloat("com_gameHz");
 	gameMsec = msec;
 #endif
 
@@ -641,7 +645,11 @@ void idGameLocal::SaveGame( idFile *f ) {
 	savegame.WriteInt( time );
 
 #ifdef _D3XP
+	#ifdef _UNLOCKEDFPS
+	savegame.WriteFloat( msec );
+	#else
 	savegame.WriteInt( msec );
+	#endif
 #endif
 
 	savegame.WriteInt( vacuumAreaNum );
@@ -1650,7 +1658,11 @@ bool idGameLocal::InitFromSaveGame( const char *mapName, idRenderWorld *renderWo
 	savegame.ReadInt( time );
 
 #ifdef _D3XP
+	#ifdef _UNLOCKEDFPS
+	savegame.ReadFloat( msec );
+	#else
 	savegame.ReadInt( msec );
+	#endif
 #endif
 
 	savegame.ReadInt( vacuumAreaNum );
@@ -1693,7 +1705,7 @@ bool idGameLocal::InitFromSaveGame( const char *mapName, idRenderWorld *renderWo
 	}
 	if ( gameSoundWorld ) {
 #ifdef _UNLOCKEDFPS
-		gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)gameMsec );
+		gameSoundWorld->SetSlowmoSpeed( slowmoMsec / gameMsec );
 #else
 		gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)USERCMD_MSEC );
 #endif
@@ -2747,7 +2759,12 @@ gameReturn_t idGameLocal::RunFrame( const usercmd_t *clientCmds ) {
 		// update the game time
 		framenum++;
 		previousTime = time;
+#ifdef _UNLOCKEDFPS
+		preciseTime += msec;
+		time = (int)idMath::Rint(preciseTime);
+#else
 		time += msec;
+#endif
 		realClientTime = time;
 		clientsideTime = time;
 
@@ -4330,7 +4347,11 @@ idGameLocal::AlertAI
 void idGameLocal::AlertAI( idEntity *ent ) {
 	if ( ent && ent->IsType( idActor::Type ) ) {
 		// alert them for the next frame
+#ifdef _UNLOCKEDFPS
+		lastAIAlertTime = time + (int)idMath::Rint(msec);
+#else
 		lastAIAlertTime = time + msec;
+#endif
 		lastAIAlertEntity = static_cast<idActor *>( ent );
 	}
 }
@@ -4787,7 +4808,11 @@ void idGameLocal::SetCamera( idCamera *cam ) {
 
 	} else {
 		inCinematic = false;
+#ifdef _UNLOCKEDFPS
+		cinematicStopTime = time + (int)idMath::Rint(msec);
+#else
 		cinematicStopTime = time + msec;
+#endif
 
 		// restore r_znear
 		cvarSystem->SetCVarFloat( "r_znear", 3.0f );
@@ -5414,7 +5439,7 @@ void idGameLocal::ComputeSlowMsec() {
 		// stop the state
 		slowmoState = SLOWMO_STATE_OFF;
 #ifdef _UNLOCKEDFPS
-		slowmoMsec = (float)gameMsec;
+		slowmoMsec = gameMsec;
 #else
 		slowmoMsec = USERCMD_MSEC;
 #endif
@@ -5439,7 +5464,7 @@ void idGameLocal::ComputeSlowMsec() {
 		if ( gameSoundWorld ) {
 			gameSoundWorld->SetSlowmo( true );
 #ifdef _UNLOCKEDFPS
-			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)gameMsec );
+			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / gameMsec );
 #else
 			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)USERCMD_MSEC );
 #endif
@@ -5475,7 +5500,11 @@ void idGameLocal::ComputeSlowMsec() {
 		}
 
 		if ( gameSoundWorld ) {
+#ifdef _UNLOCKEDFPS
+			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / gameMsec );
+#else
 			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)USERCMD_MSEC );
+#endif
 		}
 	}
 	else if ( slowmoState == SLOWMO_STATE_RAMPDOWN ) {
@@ -5501,7 +5530,7 @@ void idGameLocal::ComputeSlowMsec() {
 
 		if ( gameSoundWorld ) {
 #ifdef _UNLOCKEDFPS
-			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)gameMsec );
+			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / gameMsec );
 #else
 			gameSoundWorld->SetSlowmoSpeed( slowmoMsec / (float)USERCMD_MSEC );
 #endif
@@ -5731,7 +5760,11 @@ void idGameLocal::SetCameraCoop( idCamera *cam ) {
 
 	} else {
 		inCinematic = false;
+#ifdef _UNLOCKEDFPS
+		cinematicStopTime = time + (int)idMath::Rint(msec);
+#else
 		cinematicStopTime = time + msec;
+#endif
 
 		// restore r_znear
 		//cvarSystem->SetCVarFloat( "r_znear", 3.0f );

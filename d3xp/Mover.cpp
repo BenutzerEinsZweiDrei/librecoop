@@ -2876,7 +2876,7 @@ void idMover_Binary::Use_BinaryMover( idEntity *activator ) {
 		// FIXME: start moving USERCMD_MSEC later, because if this was player
 		// triggered, gameLocal.time hasn't been advanced yet
 #ifdef _UNLOCKEDFPS
-		MatchActivateTeam( MOVER_1TO2, gameLocal.slow.time + gameLocal.gameMsec );
+		MatchActivateTeam( MOVER_1TO2, gameLocal.slow.time + (int)idMath::Rint(gameLocal.gameMsec) );
 #else
 		MatchActivateTeam( MOVER_1TO2, gameLocal.slow.time + USERCMD_MSEC );
 #endif

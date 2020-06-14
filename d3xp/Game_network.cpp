@@ -1169,7 +1169,12 @@ void idGameLocal::ClientReadSnapshot( int clientNum, int sequence, const int gam
 	// update the game time
 	framenum = gameFrame;
 	time = gameTime;
+#ifdef _UNLOCKEDFPS
+	preciseTime = (float)time;
+	previousTime = time - (int)idMath::Rint(msec);
+#else
 	previousTime = time - msec;
+#endif
 
 	// so that StartSound/StopSound doesn't risk skipping
 	isNewFrame = true;
@@ -1782,13 +1787,23 @@ gameReturn_t idGameLocal::ClientPrediction( int clientNum, const usercmd_t *clie
 	// update the game time
 	framenum++;
 	previousTime = time;
+#ifdef _UNLOCKEDFPS
+	preciseTime += msec;
+	time = (int)idMath::Rint(preciseTime);
+#else
 	time += msec;
+#endif
 
 	// update the real client time and the new frame flag
 	if ( time > realClientTime ) {
 		realClientTime = time;
 		isNewFrame = true;
+#ifdef _UNLOCKEDFPS
+		clientSidePreciseTime += msec;
+		clientsideTime = (int)idMath::Rint(clientSidePreciseTime); //added for clientside movement code and events
+#else
 		clientsideTime += msec; //added for clientside movement code and events
+#endif
 	} else {
 		isNewFrame = false;
 	}
@@ -2249,7 +2264,12 @@ void idGameLocal::ClientReadSnapshotCoop( int clientNum, int sequence, const int
 	// update the game time
 	framenum = gameFrame;
 	time = gameTime;
+#ifdef _UNLOCKEDFPS
+	preciseTime = (float)time;
+	previousTime = time - (int)idMath::Rint(msec);
+#else
 	previousTime = time - msec;
+#endif
 
 	// so that StartSound/StopSound doesn't risk skipping
 	isNewFrame = true;

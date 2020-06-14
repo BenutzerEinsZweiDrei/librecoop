@@ -273,15 +273,28 @@ private:
 struct timeState_t {
 	int					time;
 	int					previousTime;
+#ifdef _UNLOCKEDFPS
+	float				msec;
+#else
 	int					msec;
+#endif
 	int					framenum;
 	int					realClientTime;
 
+#ifdef _UNLOCKEDFPS
+	void				Set( int t, int pt, float ms, int f, int rct )		{ time = t; previousTime = pt; msec = ms; framenum = f; realClientTime = rct; };
+	void				Get( int& t, int& pt, float& ms, int& f, int& rct )	{ t = time; pt = previousTime; ms = msec; f = framenum; rct = realClientTime; };
+	void				Save( idSaveGame *savefile ) const	{ savefile->WriteInt( time ); savefile->WriteInt( previousTime ); savefile->WriteFloat( msec ); savefile->WriteInt( framenum ); savefile->WriteInt( realClientTime ); }
+	void				Restore( idRestoreGame *savefile )	{ savefile->ReadInt( time ); savefile->ReadInt( previousTime ); savefile->ReadFloat( msec ); savefile->ReadInt( framenum ); savefile->ReadInt( realClientTime ); }
+	void				Increment()											{ framenum++; previousTime = time; time += (int)idMath::Rint(msec); realClientTime = time; };
+#else
 	void				Set( int t, int pt, int ms, int f, int rct )		{ time = t; previousTime = pt; msec = ms; framenum = f; realClientTime = rct; };
 	void				Get( int& t, int& pt, int& ms, int& f, int& rct )	{ t = time; pt = previousTime; ms = msec; f = framenum; rct = realClientTime; };
 	void				Save( idSaveGame *savefile ) const	{ savefile->WriteInt( time ); savefile->WriteInt( previousTime ); savefile->WriteInt( msec ); savefile->WriteInt( framenum ); savefile->WriteInt( realClientTime ); }
 	void				Restore( idRestoreGame *savefile )	{ savefile->ReadInt( time ); savefile->ReadInt( previousTime ); savefile->ReadInt( msec ); savefile->ReadInt( framenum ); savefile->ReadInt( realClientTime ); }
 	void				Increment()											{ framenum++; previousTime = time; time += msec; realClientTime = time; };
+#endif
+
 };
 
 enum slowmoState_t {
@@ -367,10 +380,14 @@ public:
 	int						framenum;
 	int						previousTime;			// time in msec of last frame
 	int						time;					// in msec
-	int						msec;					// time since last update in milliseconds
 #ifdef _UNLOCKEDFPS
+	float					msec;					// time since last update in milliseconds
+	float					preciseTime;			// added by Stradex for cm_gameHz fidelity
 	int						gameFps;				//added by Stradex for com_gameHz
-	int						gameMsec;				//added by Stradex for com_gameHz (ROE)
+	float					gameMsec;				//added by Stradex for com_gameHz (ROE)
+	float					clientSidePreciseTime;	//for unlockedFPS
+#else 
+	int						msec;					// time since last update in milliseconds
 #endif
 
 	int						vacuumAreaNum;			// -1 if level doesn't have any outside areas
@@ -575,7 +592,11 @@ public:
 	// added the following to assist licensees with merge issues
 	int						GetFrameNum() const { return framenum; };
 	int						GetTime() const { return time; };
+#ifdef _UNLOCKEDFPS
+	int						GetMSec() const { return (int)idMath::Rint(msec); };
+#else
 	int						GetMSec() const { return msec; };
+#endif
 
 	int						GetNextClientNum( int current ) const;
 	idPlayer *				GetClientByNum( int current ) const;
